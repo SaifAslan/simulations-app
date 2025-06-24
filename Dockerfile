@@ -46,7 +46,7 @@ COPY src/frontend/package*.json ./
 RUN npm install
 
 # Copy backend package files and install dependencies
-WORKDIR /app/src/food-sim-api
+WORKDIR /app/src/backend
 COPY src/food-sim-api/package*.json ./
 RUN npm install
 

@@ -2,7 +2,7 @@
   "name": "fullstack-app",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm --prefix src/frontend run dev\" \"npm --prefix src/food-sim-api run dev\"",
+    "dev": "concurrently \"npm --prefix src/frontend run dev\" \"npm --prefix src/backend run dev\"",
     "test": "vitest run"
   },
   "devDependencies": {
