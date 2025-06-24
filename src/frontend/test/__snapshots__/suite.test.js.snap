@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`suite name > snapshot 1`] = `
+{
+  "foo": "bar",
+}
+`;
+
+exports[`suite name snapshot 1`] = `
+{
+  "foo": "bar",
+}
+`;
