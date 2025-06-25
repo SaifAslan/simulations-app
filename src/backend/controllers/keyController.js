@@ -2,66 +2,80 @@ const Key = require('../models/Key');
 const User = require('../models/User');
 const UserSimulationAccess = require('../models/UserSimulationAccess');
 
-exports.createKey = async (req, res) => {
+exports.createKey = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can create keys' });
+      const error = new Error('Only admins can create keys');
+      error.statusCode = 403;
+      return next(error);
     }
     const { expiryDate, numberOfTrials, keyCode } = req.body;
     
     // Check if keyCode is unique
     const existingKey = await Key.findOne({ keyCode });
     if (existingKey) {
-      return res.status(400).json({ error: 'Key code already exists' });
+      const error = new Error('Key code already exists');
+      error.statusCode = 400;
+      return next(error);
     }
 
     const key = new Key({ expiryDate, numberOfTrials, creator: user._id, keyCode });
     await key.save();
     res.status(201).json(key);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.deleteKey = async (req, res) => {
+exports.deleteKey = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can delete keys' });
+      const error = new Error('Only admins can delete keys');
+      error.statusCode = 403;
+      return next(error);
     }
     const key = await Key.findOneAndDelete({ keyCode: req.params.keyCode });
     if (!key) {
-      return res.status(404).json({ error: 'Key not found' });
+      const error = new Error('Key not found');
+      error.statusCode = 404;
+      return next(error);
     }
     res.json({ message: 'Key deleted successfully' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.deactivateKey = async (req, res) => {
+exports.deactivateKey = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can deactivate keys' });
+      const error = new Error('Only admins can deactivate keys');
+      error.statusCode = 403;
+      return next(error);
     }
     const key = await Key.findOneAndUpdate({ keyCode: req.params.keyCode }, { isActive: false }, { new: true });
     if (!key) {
-      return res.status(404).json({ error: 'Key not found' });
+      const error = new Error('Key not found');
+      error.statusCode = 404;
+      return next(error);
     }
     res.json(key);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
 
-exports.useKey = async (req, res) => {
+exports.useKey = async (req, res, next) => {
   try {
     const key = await Key.findOne({ keyCode: req.params.keyCode });
     if (!key || !key.isActive || key.expiryDate < Date.now()) {
-      return res.status(400).json({ error: 'Invalid key' });
+      const error = new Error('Invalid key');
+      error.statusCode = 400;
+      return next(error);
     }
 
     let userSimulationAccess = await UserSimulationAccess.findOne({
@@ -73,7 +87,9 @@ exports.useKey = async (req, res) => {
     if (userSimulationAccess) {
       // Check if there are trials left
       if (userSimulationAccess.trialsLeft <= 0) {
-        return res.status(400).json({ error: 'No trials left for this key' });
+        const error = new Error('No trials left for this key');
+        error.statusCode = 400;
+        return next(error);
       }
 
       // Decrease trials and update last activation date
@@ -94,10 +110,10 @@ exports.useKey = async (req, res) => {
 
     res.json(userSimulationAccess);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
-exports.checkKey = async (req, res) => {
+exports.checkKey = async (req, res, next) => {
   try {
     const key = await Key.findOne({ keyCode: req.params.keyCode });
     if (!key || !key.isActive || key.expiryDate < Date.now()) {
@@ -111,6 +127,6 @@ exports.checkKey = async (req, res) => {
 
     res.json({ valid: true, message: 'Key is valid and can be used' });
   } catch (error) {
-    res.status(500).json({ valid: false, message: 'Server error while checking key' });
+    next(error);
   }
 };

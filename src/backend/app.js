@@ -13,7 +13,7 @@ app.use(express.json());
 const secretKey = 'your-secret-key'; // Replace with a strong secret key
 app.use(
   expressjwt({ secret: secretKey, algorithms: ['HS256'] }).unless({
-    path: [ '/users/login','/users/register', /^\/keys\/checkKey\/.*/], // Add more routes here if needed
+    path: [ '/users/login','/users/register', /^\/keys\/checkKey\/.*/], // Do NOT add '/users/admins' here
   })
 );
 // Enable CORS
@@ -26,6 +26,10 @@ app.use(cors({
 // Routes
 app.use(routes);
 
+// Centralized error handler (should be after all routes)
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
+
 const uri = "mongodb+srv://saif:LcciKEOJi6ulVxHT@cluster0.6zbtdaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Database connection
@@ -34,4 +38,9 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .catch(err => console.error('MongoDB connection error:', err));
 
 const PORT = process.env.PORT || 3030;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;

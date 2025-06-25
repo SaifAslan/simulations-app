@@ -4,8 +4,9 @@ const { generateToken } = require("../middleware/auth");
 const Key = require("../models/Key");
 const UserSimulationAccess = require("../models/UserSimulationAccess");
 
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
   try {
+    await checkEmailAlreadyExists(req.body.email);
     const { username, password, keyCode, email, name, surname } = req.body;
     const user = new User({
       username,
@@ -47,14 +48,15 @@ exports.createUser = async (req, res) => {
       user: { ...user.toObject(), token },
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.createAdmin = async (req, res) => {
+exports.createAdmin = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    const user = new User({ username, password, role: "admin" });
+    await checkEmailAlreadyExists(req.body.email);
+    const { username, password, email } = req.body;
+    const user = new User({ username, password, email, role: "admin" });
     await user.save();
 
     const token = generateToken(user);
@@ -63,11 +65,11 @@ exports.createAdmin = async (req, res) => {
       user: { ...user.toObject(), token },
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
@@ -80,11 +82,20 @@ exports.login = async (req, res) => {
       user: { ...user.toObject(), token },
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
 exports.logout = (req, res) => {
   // Since JWT is stateless, logout is simply not sending the token back
   res.json({ message: "Logged out successfully" });
+};
+
+const checkEmailAlreadyExists = async (email) => {
+  const user = await User.findOne({ email });
+  if (user) {
+    const error = new Error("User already exists");
+    error.statusCode = 400;
+    throw error;
+  }
 };

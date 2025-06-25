@@ -1,5 +1,11 @@
 #!/bin/sh
 
 export CI=true
-cd src/frontend
-npm test ${@}
+
+# Run backend tests
+cd src/backend
+npm test || exit 1
+
+# Run frontend tests
+cd ../frontend
+npm test || exit 1

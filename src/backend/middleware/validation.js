@@ -8,7 +8,7 @@ const validate = (validations) => {
     if (errors.isEmpty()) {
       return next();
     }
-
+    console.log('Validation errors:', errors,validations);
     const extractedErrors = [];
     errors.array().forEach(err => extractedErrors.push({ [err.path]: err.msg }));
 

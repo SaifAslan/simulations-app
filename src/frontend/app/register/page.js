@@ -21,10 +21,8 @@ const RegisterPage = () => {
   }
   return Promise.resolve();
 };
-console.log(keyCode);
 
   useEffect(() => {
-    console.log(keyCode);
     
     if (keyCodeParam) {
       setKeyCode(keyCodeParam);

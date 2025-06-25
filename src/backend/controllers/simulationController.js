@@ -2,7 +2,7 @@
 const Simulation = require('../models/Simulation');
 const User = require('../models/User');
 
-exports.createSimulation = async (req, res) => {
+exports.createSimulation = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (user.role !== 'admin') {
@@ -13,15 +13,15 @@ exports.createSimulation = async (req, res) => {
     await simulation.save();
     res.status(201).json(simulation);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.getAllSimulations = async (req, res) => {
+exports.getAllSimulations = async (req, res, next) => {
   try {
     const simulations = await Simulation.find();
     res.json(simulations);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };

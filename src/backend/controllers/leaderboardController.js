@@ -1,7 +1,7 @@
 // controllers/leaderboardController.js
 const Leaderboard = require('../models/Leaderboard');
 
-exports.addScore = async (req, res) => {
+exports.addScore = async (req, res, next) => {
   try {
     const { simulationId, score } = req.body;
     const leaderboardEntry = new Leaderboard({
@@ -12,11 +12,11 @@ exports.addScore = async (req, res) => {
     await leaderboardEntry.save();
     res.status(201).json(leaderboardEntry);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    next(error);
   }
 };
 
-exports.getLeaderboard = async (req, res) => {
+exports.getLeaderboard = async (req, res, next) => {
   try {
     const leaderboard = await Leaderboard.find()
       .populate({
@@ -32,6 +32,6 @@ exports.getLeaderboard = async (req, res) => {
 
     res.status(200).json(leaderboard);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
