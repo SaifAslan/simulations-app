@@ -1,6 +1,7 @@
-// ~root\src\components\Game.jsx
+// src\components\Game.jsx
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Layout, Row, Col, Card, Divider, Button } from "antd";
 import combinations from "../data/combinations";
 import researchResults from "../data/researchResults";
@@ -10,59 +11,85 @@ import GameStats from "./GameStats";
 import MethodSelector from "./MethodSelector";
 import ProductSelector from "./ProductSelector";
 import LocationSelector from "./LocationSelector";
-import axios from "axios";
-import { useSelector } from "react-redux";
 
 const { Content } = Layout;
 
-const Game = ({ initialDays = 7 }) => {
+const Game = ({ initialDays = 35 }) => {
   const [daysLeft, setDaysLeft] = useState(initialDays);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [visitedLocations, setVisitedLocations] = useState({});
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [gameOver, setGameOver] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState([]);
-  const [activeTab, setActiveTab] = useState("1"); // default tab
+  const [activeTab, setActiveTab] = useState("1");
 
-  const userInfo = useSelector((state) => state.user.userInfo);
-  // console.log(userInfo);
+  // Get token from Redux store
+  const token = useSelector((state) => state.user?.userInfo?.token);
 
-  // useEffect(() => {
-  //   if (daysLeft === 0 && !gameOver) {
-  //     setGameOver(true);
-  //     submitScoreAndFetchLeaderboard();
-  //   }
-  // }, [daysLeft]);
+  // Check if game has ended and handle leaderboard
+  useEffect(() => {
+    if (daysLeft === 0 && !gameEnded) {
+      handleGameEnd();
+    }
+  }, [daysLeft, gameEnded]);
 
-  // const submitScoreAndFetchLeaderboard = async () => {
-  //   try {
-  //     await axios.post(
-  //       "http://localhost:3030/leaderboard",
+  const handleGameEnd = async () => {
+    setGameEnded(true);
+    
+    try {
+      // Post the score
+      await postScore(totalRevenue);
+      
+      // Fetch updated leaderboard
+      const leaderboard = await fetchLeaderboard();
+      setLeaderboardData(leaderboard);
+      
+      // Switch to leaderboard tab
+      setActiveTab("3");
+      
+      alert(`Game Over! Your final score: $${totalRevenue}`);
+    } catch (error) {
+      console.error('Error handling game end:', error);
+      alert('Game ended but there was an error updating the leaderboard.');
+    }
+  };
 
-  //       {
-  //         simulationId: "67720433a90800571dfe2243", // replace with actual ID
-  //         score: totalRevenue,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${userInfo.token}`,
-  //         },
-  //       }
-  //     );
+  const postScore = async (score) => {
+    const response = await fetch('http://localhost:3030/leaderboard', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        simulationId: "67720433a90800571dfe2243",
+        score: score
+      })
+    });
 
-  //     const response = await axios.get("http://localhost:3030/leaderboard", {
-  //       headers: {
-  //         Authorization: `Bearer ${userInfo.token}`,
-  //       },
-  //     });
-  //     setLeaderboardData(response.data);
-  //     setActiveTab("3"); // activate leaderboard tab
-  //   } catch (error) {
-  //     console.error("Error submitting score or fetching leaderboard:", error);
-  //   }
-  // };
+    if (!response.ok) {
+      throw new Error('Failed to post score');
+    }
+
+    return response.json();
+  };
+
+  const fetchLeaderboard = async () => {
+    const response = await fetch('http://localhost:3030/leaderboard', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch leaderboard');
+    }
+
+    return response.json();
+  };
   const handleMethodSelect = (method) => {
     setSelectedMethod(method);
     setSelectedProduct(null);
@@ -149,16 +176,17 @@ const Game = ({ initialDays = 7 }) => {
         <Row gutter={[16, 16]}>
           <Col lg={12} sm={24}>
             <Card title="Future Content">
-              <GameContent
-                leaderboardData={leaderboardData}
+              <GameContent 
                 activeTab={activeTab}
+                leaderboardData={leaderboardData}
+                setActiveTab={setActiveTab}
               />
             </Card>
           </Col>
           <Col lg={12} sm={24}>
             <Card title="Street Food Business Simulator">
               <GameStats daysLeft={daysLeft} totalRevenue={totalRevenue} />
-
+              
               <Divider>Select Your Business Method</Divider>
 
               <MethodSelector
@@ -188,7 +216,7 @@ const Game = ({ initialDays = 7 }) => {
                 type="primary"
                 onClick={handleSubmit}
                 disabled={
-                  !selectedMethod || !selectedProduct || !selectedLocation
+                  !selectedMethod || !selectedProduct || !selectedLocation || gameEnded
                 }
               >
                 Run!

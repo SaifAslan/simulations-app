@@ -7,17 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@babel/plugin-transform-runtime": "^7.27.4",
-    "@babel/preset-env": "^7.27.2",
-    "@babel/preset-react": "^7.27.1",
     "@reduxjs/toolkit": "^2.5.0",
     "antd": "^5.22.5",
     "axios": "^1.7.9",
-    "babel-jest": "^30.0.2",
     "next": "^15.1.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -29,13 +26,10 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/jest": "^30.0.0",
     "@vitejs/plugin-react": "^4.5.2",
+    "@vitest/ui": "^2.1.8",
     "identity-obj-proxy": "^3.0.0",
-    "jest": "^30.0.2",
-    "jest-environment-jsdom": "^30.0.2",
-    "jest-transform-stub": "^2.0.0",
     "jsdom": "^26.1.0",
-    "ts-jest": "^29.4.0"
+    "vitest": "^2.1.8"
   }
 }

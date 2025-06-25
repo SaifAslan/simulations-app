@@ -1,10 +1,36 @@
+// src/frontend/components/GameContent.jsx
 "use client";
 import { Tabs } from "antd";
 import React from "react";
 
 import MarketDataContent from "./MarketDataContent";
 
-function GameContetnt({ leaderboardData, activeTab }) {
+function GameContetnt({ activeTab = "1", leaderboardData = [], setActiveTab }) {
+  const handleTabChange = (key) => {
+    if (setActiveTab) {
+      setActiveTab(key);
+    }
+  };
+
+  const renderLeaderboard = () => {
+    if (!leaderboardData || leaderboardData.length === 0) {
+      return <p>No leaderboard data available yet.</p>;
+    }
+
+    return (
+      <div>
+        <h3>Leaderboard - Top Performers</h3>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {leaderboardData.map((entry, index) => (
+            <li key={entry._id} style={{ marginBottom: '8px', fontSize: '16px' }}>
+              #{index + 1} - {entry.user?.username || 'Anonymous'}: ${entry.score}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   const items = [
     {
       key: "1",
@@ -46,22 +72,17 @@ function GameContetnt({ leaderboardData, activeTab }) {
     {
       key: "3",
       label: "Leaderboard",
-      children: (
-        <ul>
-          {leaderboardData.map((entry, index) => (
-            <li key={entry._id}>
-              #{index + 1} - {entry.user?.username ?? "Anonymous"}: $
-              {entry.score}
-            </li>
-          ))}
-        </ul>
-      ),
+      children: renderLeaderboard(),
     },
   ];
 
   return (
     <React.Fragment>
-      <Tabs activeKey={activeTab} defaultActiveKey="1" items={items} />
+      <Tabs 
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        items={items} 
+      />
     </React.Fragment>
   );
 }
