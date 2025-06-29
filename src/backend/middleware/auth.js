@@ -35,20 +35,20 @@ exports.isAdmin = async (req, res, next) => {
   }
 };
 
-const errorHandler = (err, req, res, next) => {
-  // Handle express-jwt UnauthorizedError
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({ error: 'Invalid or missing token' });
-  }
-  // ...existing code...
-  const statusCode = err.statusCode || 500;
-  const response = {
-    error: statusCode === 500 && process.env.NODE_ENV === 'production'
-      ? 'Internal server error'
-      : err.message || 'An error occurred',
-  };
-  if (process.env.NODE_ENV !== 'production' && err.stack) {
-    response.stack = err.stack;
-  }
-  res.status(statusCode).json(response);
-};
+// const errorHandler = (err, req, res, next) => {
+//   // Handle express-jwt UnauthorizedError
+//   if (err.name === 'UnauthorizedError') {
+//     return res.status(401).json({ error: 'Invalid or missing token' });
+//   }
+//   // ...existing code...
+//   const statusCode = err.statusCode || 500;
+//   const response = {
+//     error: statusCode === 500 && process.env.NODE_ENV === 'production'
+//       ? 'Internal server error'
+//       : err.message || 'An error occurred',
+//   };
+//   if (process.env.NODE_ENV !== 'production' && err.stack) {
+//     response.stack = err.stack;
+//   }
+//   res.status(statusCode).json(response);
+// };

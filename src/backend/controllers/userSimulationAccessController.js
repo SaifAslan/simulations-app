@@ -2,7 +2,7 @@
 const UserSimulationAccess = require('../models/UserSimulationAccess');
 
 // Fetch user's simulations
-exports.getUserSimulation = async (req, res, next) => {
+ exports.getUserSimulation = async (req, res) => {
   try {
     const userId = req.userId; // Assuming user ID is available in the token payload after verification
     let query = { user: userId }; // Fetch only simulations with trials left
@@ -17,7 +17,7 @@ exports.getUserSimulation = async (req, res, next) => {
 
     res.json(userSimulations);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 }
 
