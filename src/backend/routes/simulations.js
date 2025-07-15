@@ -9,13 +9,25 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 // Validation middleware
 const createSimulationValidation = [
   body('name').notEmpty().isString().withMessage('Name is required and must be a string'),
-  body('description').notEmpty().isString().withMessage('Description is required and must be a string')
+  body('description').notEmpty().isString().withMessage('Description is required and must be a string'),
+  body('route')
+    .notEmpty()
+    .isString()
+    .isLength({ min: 1, max: 50 })
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Route is required, must be 1-50 characters, and can only contain letters, numbers, and hyphens')
 ];
 
 const updateSimulationValidation = [
   param('id').isMongoId().withMessage('Invalid simulation ID'),
   body('name').notEmpty().isString().withMessage('Name is required and must be a string'),
-  body('description').notEmpty().isString().withMessage('Description is required and must be a string')
+  body('description').notEmpty().isString().withMessage('Description is required and must be a string'),
+  body('route')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 50 })
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Route must be 1-50 characters and can only contain letters, numbers, and hyphens')
 ];
 
 const getSimulationsByIdsValidation = [
@@ -27,10 +39,21 @@ const mongoIdValidation = [
   param('id').isMongoId().withMessage('Invalid simulation ID')
 ];
 
+const routeValidation = [
+  param('route')
+    .isString()
+    .isLength({ min: 1, max: 50 })
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Route must be 1-50 characters and can only contain letters, numbers, and hyphens')
+];
+
 // Simulation routes
 router.post('/', isLoggedIn, isAdmin, validate(createSimulationValidation), simulationController.createSimulation);
 router.get('/', isLoggedIn, isAdmin, simulationController.getAllSimulations);
 router.post('/multiple', isLoggedIn, isAdmin, validate(getSimulationsByIdsValidation), simulationController.getSimulationsByIds);
+
+// Route-based access (public endpoint for students)
+router.get('/route/:route', validate(routeValidation), simulationController.getSimulationByRoute);
 
 // Recycle bin routes
 router.get('/bin/all', isLoggedIn, isAdmin, simulationController.getRecycleBin);

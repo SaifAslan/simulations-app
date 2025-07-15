@@ -5,14 +5,47 @@ const User = require('../models/User');
 
 exports.createSimulation = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
-    const simulation = new Simulation({ name, description });
+    const { name, description, route } = req.body;
+    
+    // Check if route already exists for non-deleted simulations
+    const existingSimulation = await Simulation.findOne({ 
+      route: route.toLowerCase(), 
+      isDeleted: false 
+    });
+    
+    if (existingSimulation) {
+      return res.status(409).json({ error: 'Route already exists' });
+    }
+    
+    const simulation = new Simulation({ 
+      name, 
+      description, 
+      route: route.toLowerCase() 
+    });
     await simulation.save();
     res.status(201).json(simulation);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Route already exists' });
+    }
+    next(error);
+  }
+};
+exports.getSimulationByRoute = async (req, res, next) => {
+  try {
+    const simulation = await Simulation.findOne({ 
+      route: req.params.route.toLowerCase(), 
+      isDeleted: false 
+    });
+    if (!simulation) {
+      return res.status(404).json({ error: 'Simulation not found' });
+    }
+    res.json(simulation);
   } catch (error) {
     next(error);
   }
 };
+
 
 exports.getAllSimulations = async (req, res, next) => {
   try {
@@ -51,12 +84,32 @@ exports.getSimulationById = async (req, res, next) => {
   }
 };
 
+
 exports.updateSimulation = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, route } = req.body;
+    
+    // If route is being updated, check if it already exists
+    if (route) {
+      const existingSimulation = await Simulation.findOne({ 
+        route: route.toLowerCase(), 
+        isDeleted: false,
+        _id: { $ne: req.params.id } // Exclude current simulation
+      });
+      
+      if (existingSimulation) {
+        return res.status(409).json({ error: 'Route already exists' });
+      }
+    }
+    
+    const updateData = { name, description };
+    if (route) {
+      updateData.route = route.toLowerCase();
+    }
+    
     const simulation = await Simulation.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
-      { name, description },
+      updateData,
       { new: true, runValidators: true }
     );
     if (!simulation) {
@@ -64,6 +117,9 @@ exports.updateSimulation = async (req, res, next) => {
     }
     res.json(simulation);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Route already exists' });
+    }
     next(error);
   }
 };

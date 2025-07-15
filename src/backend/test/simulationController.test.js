@@ -5,7 +5,7 @@ import Simulation from '../models/Simulation';
 import mongoose from 'mongoose';
 
 const adminToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODViYmM3M2RjZTE1MzI2ZmQ2ZGRkMDQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA4NDI0ODMsImV4cCI6MTc4MjQwMDA4M30.D1n6wiquY9sZQRxvWO0nuWnKrwVthzpkairTQf7zjAQ';
-const userToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODUyZTc3MTE3ZDBlYmJkNzZkOTE2MDEiLCJyb2xlIjoiY2xpZW50IiwiaWF0IjoxNzUwMzI5OTI1LCJleHAiOjE3ODE4ODc1MjV9.7x-C0A2mp4xXf6VNYsDd1SkVrGWVBN0IJRT6Cp5evcY';
+const userToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODc0ZGE2NjQxOTRhMTY4MTU1YmI0ZGMiLCJyb2xlIjoiY2xpZW50IiwiaWF0IjoxNzUyNDg4NTUwLCJleHAiOjE3ODQwNDYxNTB9.Pzoy_5wbUxyaQM3KHasavFYY6Kk0evzVKOBeTz3K38Y';
 
 describe('Simulation Controller', () => {
   let testSimulation;
@@ -18,12 +18,14 @@ describe('Simulation Controller', () => {
     // Create test simulations
     testSimulation = await Simulation.create({
       name: 'Test Simulation',
-      description: 'Test Description'
+      description: 'Test Description',
+      route: 'test-simulation'
     });
 
     deletedSimulation = await Simulation.create({
       name: 'Deleted Simulation',
       description: 'Deleted Description',
+      route: 'deleted-simulation',
       isDeleted: true,
       deletedAt: new Date()
     });
@@ -40,12 +42,14 @@ describe('Simulation Controller', () => {
         .set('Authorization', adminToken)
         .send({ 
           name: 'New Simulation', 
-          description: 'New Description' 
+          description: 'New Description',
+          route: 'new-simulation'
         });
       
       expect(res.status).toBe(201);
       expect(res.body.name).toBe('New Simulation');
       expect(res.body.description).toBe('New Description');
+      expect(res.body.route).toBe('new-simulation');
       expect(res.body.isDeleted).toBe(false);
       expect(res.body.createdAt).toBeDefined();
       expect(res.body.updatedAt).toBeDefined();
@@ -57,7 +61,8 @@ describe('Simulation Controller', () => {
         .set('Authorization', userToken)
         .send({ 
           name: 'Test Simulation', 
-          description: 'Test Desc' 
+          description: 'Test Desc',
+          route: 'test-sim'
         });
       
       expect(res.status).toBe(403);
@@ -69,7 +74,8 @@ describe('Simulation Controller', () => {
         .post('/simulations')
         .send({ 
           name: 'Test Simulation', 
-          description: 'Test Desc' 
+          description: 'Test Desc',
+          route: 'test-sim'
         });
       
       expect(res.status).toBe(401);
@@ -80,7 +86,8 @@ describe('Simulation Controller', () => {
         .post('/simulations')
         .set('Authorization', adminToken)
         .send({ 
-          description: 'Test Desc' 
+          description: 'Test Desc',
+          route: 'test-sim'
         });
       
       expect(res.status).toBe(422);
@@ -92,11 +99,81 @@ describe('Simulation Controller', () => {
         .post('/simulations')
         .set('Authorization', adminToken)
         .send({ 
-          name: 'Test Simulation' 
+          name: 'Test Simulation',
+          route: 'test-sim'
         });
       
       expect(res.status).toBe(422);
       expect(res.body.errors).toBeDefined();
+    });
+
+    it('should fail with missing route', async () => {
+      const res = await request(app)
+        .post('/simulations')
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Test Simulation',
+          description: 'Test Description'
+        });
+      
+      expect(res.status).toBe(422);
+      expect(res.body.errors).toBeDefined();
+    });
+
+    it('should fail with invalid route format', async () => {
+      const res = await request(app)
+        .post('/simulations')
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Test Simulation',
+          description: 'Test Description',
+          route: 'invalid route with spaces'
+        });
+      
+      expect(res.status).toBe(422);
+      expect(res.body.errors).toBeDefined();
+    });
+
+    it('should fail with route containing uppercase letters', async () => {
+      const res = await request(app)
+        .post('/simulations')
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Test Simulation',
+          description: 'Test Description',
+          route: 'InvalidRoute'
+        });
+      
+      expect(res.status).toBe(422);
+      expect(res.body.errors).toBeDefined();
+    });
+
+    it('should fail with route containing special characters', async () => {
+      const res = await request(app)
+        .post('/simulations')
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Test Simulation',
+          description: 'Test Description',
+          route: 'invalid@route#'
+        });
+      
+      expect(res.status).toBe(422);
+      expect(res.body.errors).toBeDefined();
+    });
+
+    it('should fail with duplicate route', async () => {
+      const res = await request(app)
+        .post('/simulations')
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Another Simulation',
+          description: 'Another Description',
+          route: 'test-simulation' // Same as testSimulation
+        });
+      
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('Route already exists');
     });
 
     it('should fail with invalid data types', async () => {
@@ -105,7 +182,8 @@ describe('Simulation Controller', () => {
         .set('Authorization', adminToken)
         .send({ 
           name: 123, 
-          description: true 
+          description: true,
+          route: 456
         });
       
       expect(res.status).toBe(422);
@@ -123,6 +201,7 @@ describe('Simulation Controller', () => {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBe(1);
       expect(res.body[0].name).toBe('Test Simulation');
+      expect(res.body[0].route).toBe('test-simulation');
     });
 
     it('should not include deleted simulations', async () => {
@@ -151,6 +230,52 @@ describe('Simulation Controller', () => {
     });
   });
 
+  describe('GET /simulations/route/:route - Get Simulation by Route', () => {
+    it('should get a simulation by route', async () => {
+      const res = await request(app)
+        .get('/simulations/route/test-simulation')
+        .set('Authorization', userToken);
+      
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe('Test Simulation');
+      expect(res.body.route).toBe('test-simulation');
+      expect(res.body._id).toBe(testSimulation._id.toString());
+    });
+
+    it('should return 404 for non-existent route', async () => {
+      const res = await request(app)
+        .get('/simulations/route/non-existent-route')
+        .set('Authorization', userToken);
+      
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Simulation not found');
+    });
+
+    it('should return 422 for route with spaces', async () => {
+      const res = await request(app)
+        .get('/simulations/route/invalid route')
+        .set('Authorization', userToken);
+      
+      expect(res.status).toBe(422);
+    });
+
+    it('should allow any authenticated user to access by route', async () => {
+      const res = await request(app)
+        .get('/simulations/route/test-simulation')
+        .set('Authorization', userToken);
+      
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe('Test Simulation');
+    });
+
+    it('should fail without authentication', async () => {
+      const res = await request(app)
+        .get('/simulations/route/test-simulation');
+      
+      expect(res.status).toBe(401);
+    });
+  });
+
   describe('GET /simulations/:id - Get Simulation by ID', () => {
     it('should get a simulation by ID', async () => {
       const res = await request(app)
@@ -159,6 +284,7 @@ describe('Simulation Controller', () => {
       
       expect(res.status).toBe(200);
       expect(res.body.name).toBe('Test Simulation');
+      expect(res.body.route).toBe('test-simulation');
       expect(res.body._id).toBe(testSimulation._id.toString());
     });
 
@@ -201,7 +327,8 @@ describe('Simulation Controller', () => {
     it('should get multiple simulations by IDs', async () => {
       const sim2 = await Simulation.create({
         name: 'Second Simulation',
-        description: 'Second Description'
+        description: 'Second Description',
+        route: 'second-simulation'
       });
 
       const res = await request(app)
@@ -279,14 +406,36 @@ describe('Simulation Controller', () => {
         .set('Authorization', adminToken)
         .send({ 
           name: 'Updated Name', 
-          description: 'Updated Description' 
+          description: 'Updated Description',
+          route: 'updated-route'
         });
       
       expect(res.status).toBe(200);
-      expect(res.body.name).toBe('Updated Name');
-      expect(res.body.description).toBe('Updated Description');
+      expect(res.body?.name).toBe('Updated Name');
+      expect(res.body?.description).toBe('Updated Description');
+      expect(res.body?.route).toBe('updated-route');
     });
 
+    it('should fail with duplicate route on update', async () => {
+      // Create another simulation first
+      const sim2 = await Simulation.create({
+        name: 'Second Simulation',
+        description: 'Second Description',
+        route: 'second-simulation'
+      });
+
+      const res = await request(app)
+        .put(`/simulations/${testSimulation._id}`)
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Updated Name',
+          description: 'Updated Description',
+          route: 'second-simulation' // Same as sim2
+        });
+      
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('Route already exists');
+    });
 
     it('should not allow non-admin to update', async () => {
       const res = await request(app)
@@ -305,10 +454,24 @@ describe('Simulation Controller', () => {
         .set('Authorization', adminToken)
         .send({ 
           name: 'Updated Name',
-          description: 'Updated Description'
+          description: 'Updated Description',
+          route: 'updated-route'
         });
       
       expect(res.status).toBe(404);
+    });
+
+    it('should validate route format on update', async () => {
+      const res = await request(app)
+        .put(`/simulations/${testSimulation._id}`)
+        .set('Authorization', adminToken)
+        .send({ 
+          name: 'Updated Name',
+          description: 'Updated Description',
+          route: 'invalid route'
+        });
+      
+      expect(res.status).toBe(422);
     });
 
     it('should validate data types', async () => {
@@ -374,6 +537,7 @@ describe('Simulation Controller', () => {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBe(1);
       expect(res.body[0].name).toBe('Deleted Simulation');
+      expect(res.body[0].route).toBe('deleted-simulation');
     });
 
     it('should not allow non-admin to view recycle bin', async () => {
@@ -454,6 +618,7 @@ describe('Simulation Controller', () => {
       await Simulation.create({
         name: 'Another Deleted',
         description: 'Another Deleted Description',
+        route: 'another-deleted',
         isDeleted: true,
         deletedAt: new Date()
       });

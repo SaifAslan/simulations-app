@@ -23,9 +23,9 @@ const SimulationList = ({ simulations }) => {
                 height={300}
               />
             }
-            title={simulation.simulation.title}
+            title={simulation.simulation?.title}
           >
-            {simulation.simulation.description.substring(0, 50)}...
+            {simulation.simulation?.description.substring(0, 50)}...
           </Card>
         </List.Item>
       )}
