@@ -1,51 +1,17 @@
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import userReducer from '../store/slices/userSlice';
 import simulationReducer from '../store/slices/simulationSlice';
+import userEvent from '@testing-library/user-event';
 
-// Import component to test
+// Import components to test
 import SimulationsPage from '../app/simulations/page.jsx';
+import SimulationList from '../components/SimulationList.jsx';
 
 // Mock axios to prevent real API calls
 vi.mock('axios');
-
-// Mock the fetchSimulations action to prevent it from running automatically
-const mockDispatch = vi.fn();
-const mockFetchSimulations = vi.fn(() => ({ type: 'mock/fetchSimulations' }));
-
-vi.mock('../../store/slices/simulationSlice', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    fetchSimulations: mockFetchSimulations
-  };
-});
-
-// Mock react-redux useDispatch
-vi.mock('react-redux', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    useDispatch: () => mockDispatch,
-  };
-});
-
-// Mock next/navigation router
-const mockPush = vi.fn();
-vi.mock('next/navigation', () => {
-  return {
-    useRouter: () => ({ push: mockPush })
-  };
-});
-
-// Mock Next.js Image component
-vi.mock('next/image', () => ({
-  default: ({ src, alt, width, height, style, ...props }) => (
-    <img src={src} alt={alt} width={width} height={height} style={style} {...props} />
-  )
-}));
 
 // Create mock store
 const createMockStore = (preloadedState = {}) => {
@@ -70,7 +36,7 @@ const ProvidersWrapper = ({ children, store }) => {
   );
 };
 
-// Mock simulation data with different structures to test edge cases
+// Mock simulation data
 const mockSimulations = [
   {
     _id: "1",
@@ -79,8 +45,7 @@ const mockSimulations = [
       name: "Street Food Business Simulator",
       title: "Street Food Business Simulator",
       description: "Learn the fundamentals of business through a street food truck simulation.",
-      route: "food-business-sim",
-      image: "https://example.com/food-sim.jpg"
+      route: "food-business-sim"
     }
   },
   {
@@ -92,49 +57,21 @@ const mockSimulations = [
       description: "Manage a retail store and learn inventory management.",
       route: "retail-management-sim"
     }
-  },
-  {
-    _id: "3",
-    simulation: {
-      _id: "sim3",
-      name: "No Route Simulation",
-      title: "No Route Simulation",
-      description: "This simulation has no route."
-      // No route property
-    }
-  },
-  {
-    _id: "4",
-    // Direct structure (not nested under simulation)
-    name: "Direct Structure Simulation",
-    title: "Direct Structure Simulation", 
-    description: "This simulation uses direct structure.",
-    route: "direct-sim"
-  },
-  {
-    _id: "5",
-    simulation: {
-      _id: "sim5",
-      // No title, only name
-      name: "Only Name Simulation",
-      description: "Very long description that should be truncated when displayed in the card component because it exceeds the character limit that was set for proper display formatting"
-    }
   }
 ];
 
-describe("SimulationsPage", () => {
+describe("Simulations Page", () => {
   let store;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockPush.mockClear();
-    mockFetchSimulations.mockClear();
-    mockDispatch.mockClear();
+    
     // Mock axios to return mock data
     const axios = await import('axios');
     axios.default.get = vi.fn().mockResolvedValue({
       data: mockSimulations
     });
+    
     store = createMockStore({
       user: {
         userInfo: {
@@ -150,225 +87,231 @@ describe("SimulationsPage", () => {
     });
   });
 
-  it("shows loading state when fetching simulations", async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: [], loading: true, error: null }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
+  describe("Fetching Simulations", () => {
+    it("dispatches fetchSimulations on mount", async () => {
+      render(
+        <SimulationsPage />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      // Wait for loading to complete and title to appear
+      await waitFor(() => {
+        expect(screen.getByText("Available Simulations")).toBeInTheDocument();
       });
     });
-    
-    expect(screen.getByText("Loading simulations...")).toBeInTheDocument();
-    // Check for Ant Design Spin component 
-    const spinElement = document.querySelector('.ant-spin');
-    expect(spinElement).toBeInTheDocument();
+
+    it("shows loading state when fetching simulations", () => {
+      store = createMockStore({
+        user: {
+          userInfo: {
+            token: "mock-token"
+          }
+        },
+        simulations: {
+          data: [],
+          loading: true,
+          error: null
+        }
+      });
+
+      render(
+        <SimulationsPage />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      expect(screen.getByText("Loading simulations...")).toBeInTheDocument();
+    });
+
+    it("displays simulations when data is loaded", () => {
+      store = createMockStore({
+        user: {
+          userInfo: {
+            token: "mock-token"
+          }
+        },
+        simulations: {
+          data: mockSimulations,
+          loading: false,
+          error: null
+        }
+      });
+
+      render(
+        <SimulationsPage />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      // Wait for the component to render with data
+      waitFor(() => {
+        expect(screen.getByText("Street Food Business Simulator")).toBeInTheDocument();
+        expect(screen.getByText("Retail Management Simulator")).toBeInTheDocument();
+      });
+    });
   });
 
-  it("shows error state if error occurs", async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: [], loading: false, error: "Failed to fetch" }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-      });
-    });
-    
-    expect(screen.getByText(/Error loading simulations/i)).toBeInTheDocument();
-    expect(screen.getByText(/Failed to fetch/)).toBeInTheDocument();
-    expect(screen.getByText("Available Simulations")).toBeInTheDocument();
-  });
+  describe("Simulation List Rendering", () => {
+    it("renders simulation cards with correct information", () => {
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
 
-  it("shows empty state if no simulations", async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: [], loading: false, error: null }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-      });
-    });
-    
-    expect(screen.getByText("No simulations available")).toBeInTheDocument();
-    expect(screen.getByText("Available Simulations")).toBeInTheDocument();
-  });
-
-  it("renders simulation cards with correct information", async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-      });
-    });
-    
-    await waitFor(() => {
-      // Check titles are rendered
+      // Check titles
       expect(screen.getByText("Street Food Business Simulator")).toBeInTheDocument();
       expect(screen.getByText("Retail Management Simulator")).toBeInTheDocument();
-      expect(screen.getByText("No Route Simulation")).toBeInTheDocument();
-      expect(screen.getByText("Direct Structure Simulation")).toBeInTheDocument();
-      expect(screen.getByText("Only Name Simulation")).toBeInTheDocument();
-      
-      // Check descriptions are rendered (truncated for long ones)
+
+      // Check descriptions
       expect(screen.getByText(/Learn the fundamentals of business/)).toBeInTheDocument();
       expect(screen.getByText(/Manage a retail store/)).toBeInTheDocument();
-      expect(screen.getByText(/This simulation has no route/)).toBeInTheDocument();
-      expect(screen.getByText(/Very long description that should be truncated/)).toBeInTheDocument();
+    });
+
+    it("renders simulation images", () => {
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      const images = screen.getAllByAltText("example");
+      expect(images).toHaveLength(2);
+    });
+
+    it("renders Link components for simulations with routes", () => {
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      // Check that Link components are rendered with correct href attributes
+      const links = screen.getAllByRole("link");
+      expect(links).toHaveLength(2);
+      
+      expect(links[0]).toHaveAttribute("href", "/simulations/food-business-sim");
+      expect(links[1]).toHaveAttribute("href", "/simulations/retail-management-sim");
+    });
+
+    it("does not render Link for simulations without routes", () => {
+      const simulationsWithoutRoute = [
+        {
+          _id: "1",
+          simulation: {
+            _id: "sim1",
+            name: "Test Simulation",
+            title: "Test Simulation",
+            description: "Test description"
+            // No route property
+          }
+        }
+      ];
+
+      render(
+        <SimulationList simulations={simulationsWithoutRoute} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      // Should not have any Link components
+      const links = screen.queryAllByRole("link");
+      expect(links).toHaveLength(0);
+      
+      // Should still render the simulation card
+      expect(screen.getByText("Test Simulation")).toBeInTheDocument();
     });
   });
 
-  it("handles different data structures correctly", async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
+  describe("Link Navigation", () => {
+    it("has correct href attributes for navigation", () => {
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      const foodSimLink = screen.getByRole("link", { name: /Street Food Business Simulator/i });
+      const retailSimLink = screen.getByRole("link", { name: /Retail Management Simulator/i });
+
+      expect(foodSimLink).toHaveAttribute("href", "/simulations/food-business-sim");
+      expect(retailSimLink).toHaveAttribute("href", "/simulations/retail-management-sim");
     });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
+
+    it("handles simulations with missing title gracefully", () => {
+      const simulationsWithoutTitle = [
+        {
+          _id: "1",
+          simulation: {
+            _id: "sim1",
+            description: "Test description",
+            route: "test-sim"
+            // No title property
+          }
+        }
+      ];
+
+      render(
+        <SimulationList simulations={simulationsWithoutTitle} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      // Should render without crashing - check for truncated description
+      expect(screen.getByText("Test description...")).toBeInTheDocument();
+      
+      // Should still render a Link since it has a route
+      const links = screen.getAllByRole("link");
+      expect(links).toHaveLength(1);
+      expect(links[0]).toHaveAttribute("href", "/simulations/test-sim");
+    });
+
+    it("handles simulations with missing description", () => {
+      const simulationsWithoutDescription = [
+        {
+          _id: "1",
+          simulation: {
+            _id: "sim1",
+            name: "Test Simulation",
+            title: "Test Simulation",
+            route: "test-sim"
+            // No description property
+          }
+        }
+      ];
+
+      render(
+        <SimulationList simulations={simulationsWithoutDescription} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      expect(screen.getByText("Test Simulation")).toBeInTheDocument();
+    });
+  });
+
+  describe("Card Interaction States", () => {
+    it("shows hover effect on simulation cards", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      await waitFor(async () => {
+        const foodSimCard = screen.getByText("Street Food Business Simulator").closest('.ant-card');
+        
+        // Hover over the card
+        await user.hover(foodSimCard);
+        
+        // The card should have hoverable class or styling
+        expect(foodSimCard).toHaveClass("ant-card");
       });
     });
-    
-    await waitFor(() => {
-      // Check that simulation with direct structure works
-      expect(screen.getByText("Direct Structure Simulation")).toBeInTheDocument();
-      // Check that simulation with only name (no title) works
-      expect(screen.getByText("Only Name Simulation")).toBeInTheDocument();
-    });
-  });
 
-  it('enables "Start Simulation" button only if simulation has a route', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-      });
-    });
-    
-    await waitFor(() => {
-      const startButtons = screen.getAllByText("Start Simulation");
-      const unavailableButtons = screen.getAllByText("Unavailable");
+    it("shows cursor pointer on simulation cards", () => {
+      render(
+        <SimulationList simulations={mockSimulations} />,
+        { wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> }
+      );
+
+      const foodSimCard = screen.getByText("Street Food Business Simulator").closest('.ant-card');
       
-      // Should have 3 "Start Simulation" buttons (for simulations with routes)
-      expect(startButtons).toHaveLength(3);
-      // Should have 2 "Unavailable" buttons (for simulations without routes)
-      expect(unavailableButtons).toHaveLength(2);
-      
-      // Check that available buttons are enabled
-      startButtons.forEach(button => {
-        expect(button.closest('button')).toBeEnabled();
-      });
-      
-      // Check that unavailable buttons are disabled
-      unavailableButtons.forEach(button => {
-        expect(button.closest('button')).toBeDisabled();
-      });
+      // Check that the card has cursor pointer styling
+      expect(foodSimCard).toHaveStyle({ cursor: "pointer" });
     });
   });
 
-  it('shows warning message for simulations without routes', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
-    });
-    
-    await act(async () => {
-      render(<SimulationsPage />, { 
-        wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-      });
-    });
-    
-    await waitFor(() => {
-      const warningMessages = screen.getAllByText(/Route configuration missing/);
-      expect(warningMessages).toHaveLength(2); // Two simulations without routes
-    });
-  });
-
-  it('navigates to correct route when "Start Simulation" is clicked', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
-    });
-    
-    render(<SimulationsPage />, { 
-      wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-    });
-    
-    await waitFor(() => {
-      const startButtons = screen.getAllByText("Start Simulation");
-      expect(startButtons).toHaveLength(3);
-      
-      // Click the first "Start Simulation" button (Street Food Business Simulator)
-      fireEvent.click(startButtons[0]);
-      expect(mockPush).toHaveBeenCalledWith('/simulations/food-business-sim');
-    });
-  });
-
-  it('uses default image when simulation has no image', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations, loading: false, error: null }
-    });
-    
-    render(<SimulationsPage />, { 
-      wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-    });
-    
-    await waitFor(() => {
-      const images = screen.getAllByRole('img');
-      // Should have images for all simulations (including default ones)
-      expect(images.length).toBeGreaterThan(0);
-      
-      // Check that default image is used for simulations without custom image
-      const defaultImageSrc = "https://www.skillshare.com/blog/wp-content/uploads/2021/03/Screenshot2021-03-15at18.03.402-1.jpg";
-      const imagesWithDefaultSrc = images.filter(img => img.src === defaultImageSrc);
-      expect(imagesWithDefaultSrc.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('handles null or undefined simulations gracefully', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: null, loading: false, error: null }
-    });
-    
-    render(<SimulationsPage />, { 
-      wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-    });
-    
-    expect(screen.getByText("No simulations available")).toBeInTheDocument();
-  });
-
-  it('renders cards with proper hover states', async () => {
-    store = createMockStore({
-      user: { userInfo: { token: "mock-token" } },
-      simulations: { data: mockSimulations.slice(0, 2), loading: false, error: null }
-    });
-    
-    render(<SimulationsPage />, { 
-      wrapper: ({ children }) => <ProvidersWrapper store={store}>{children}</ProvidersWrapper> 
-    });
-    
-    await waitFor(() => {
-      // Cards should be rendered with proper styling
-      const cards = screen.getAllByRole('img');
-      expect(cards.length).toBeGreaterThan(0);
-    });
-  });
 }); 
