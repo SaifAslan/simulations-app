@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "add-food-sim": "node scripts/addFoodBusinessSim.js"
   },
   "author": "",
   "license": "ISC",

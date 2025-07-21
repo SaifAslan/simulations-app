@@ -1,6 +1,7 @@
 'use client'
 import { Geist, Geist_Mono } from "next/font/google";
 import { ReduxProvider } from '@/store/provider';
+import Navigation from '../components/Navigation';
 
 import "./globals.css";
 
@@ -23,7 +24,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <ReduxProvider>{children}</ReduxProvider>
+        <ReduxProvider>
+          <Navigation />
+          {children}
+        </ReduxProvider>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-// src\components\Game.jsx
+// src/frontend/components/Game.jsx
 "use client";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -14,7 +14,7 @@ import LocationSelector from "./LocationSelector";
 
 const { Content } = Layout;
 
-const Game = ({ initialDays = 35 }) => {
+const Game = ({ initialDays = 35, simulationId = "67720433a90800571dfe2243" }) => {
   const [daysLeft, setDaysLeft] = useState(initialDays);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [visitedLocations, setVisitedLocations] = useState({});
@@ -64,7 +64,7 @@ const Game = ({ initialDays = 35 }) => {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        simulationId: "67720433a90800571dfe2243",
+        simulationId: simulationId,
         score: score
       })
     });
@@ -77,7 +77,7 @@ const Game = ({ initialDays = 35 }) => {
   };
 
   const fetchLeaderboard = async () => {
-    const response = await fetch('http://localhost:3030/leaderboard', {
+    const response = await fetch(`http://localhost:3030/leaderboard?simulationId=${simulationId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -90,6 +90,8 @@ const Game = ({ initialDays = 35 }) => {
 
     return response.json();
   };
+
+  // ... existing code ...
   const handleMethodSelect = (method) => {
     setSelectedMethod(method);
     setSelectedProduct(null);
@@ -118,7 +120,6 @@ const Game = ({ initialDays = 35 }) => {
 
     let daysToDeduct = selectedMethod === "pushcart" ? 1 : 7;
 
-    // Fix: Access combinations data correctly
     let revenue =
       combinations[selectedLocation][selectedProduct][selectedMethod] *
       (selectedMethod === "pushcart" ? 1 : daysToDeduct);
@@ -129,7 +130,6 @@ const Game = ({ initialDays = 35 }) => {
     }
 
     setDaysLeft(daysLeft - daysToDeduct);
-    // Fix: Accumulate revenue instead of setting it
     setTotalRevenue((prevRevenue) => prevRevenue + revenue);
 
     const feedbackKey = `${selectedLocation}-${selectedProduct}`;

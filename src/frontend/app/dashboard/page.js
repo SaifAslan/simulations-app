@@ -12,13 +12,14 @@ const { TabPane } = Tabs;
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const simulations = useSelector((state) => state.simulations);
+  const simulations = useSelector((state) => state.simulations.data);
   const userData = useSelector(state => state.user)
   useEffect(() => {
     dispatch(fetchSimulations());
   }, [dispatch]);
 
   return (
+    <div style={{ marginTop: "64px", padding: "24px" }}>
     <Tabs defaultActiveKey="1">
       <TabPane tab="Simulations" key="1">
         <KeyRedeem />
@@ -29,6 +30,7 @@ const Dashboard = () => {
         Account Management (Coming Soon)
       </TabPane>
     </Tabs>
+    </div>
   );
 };
 

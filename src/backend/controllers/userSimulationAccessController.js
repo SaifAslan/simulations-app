@@ -12,7 +12,7 @@ const UserSimulationAccess = require('../models/UserSimulationAccess');
     }
 
     const userSimulations = await UserSimulationAccess.find(query)
-      .populate('simulation', 'title description imageUrl') // Populate simulation details
+      .populate('simulation', 'name description route') // Populate simulation details
       .exec();
 
     res.json(userSimulations);

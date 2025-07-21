@@ -19,11 +19,25 @@ export const fetchSimulations = createAsyncThunk(
 
 const simulationSlice = createSlice({
   name: 'simulations',
-  initialState: [],
+  initialState: {
+    data: [],
+    loading: false,
+    error: null
+  },
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(fetchSimulations.fulfilled, (state, action) => {
-      return action.payload;
+    builder
+      .addCase(fetchSimulations.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSimulations.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchSimulations.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
     });
   },
 });

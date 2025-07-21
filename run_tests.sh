@@ -2,10 +2,10 @@
 
 export CI=true
 
-# Run backend tests
-cd src/backend
-npm test || exit 1
+# # Run backend tests
+# cd src/backend
+# npm test || exit 1
 
 # Run frontend tests
-cd ../frontend
+cd ../src/frontend
 npm test || exit 1

@@ -1,5 +1,5 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
-import Game from "../components/Game";
+import Game from "../app/simulations/food-business-sim/page.jsx";
 import GameContent from "../components/GameContent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from '@reduxjs/toolkit';
@@ -65,9 +65,6 @@ describe("Game Component", () => {
     if (mockedAxios.post.mock.calls.length === 0) {
       // If not called, let's check what the component actually renders
       console.log("Axios post not called. Checking component state...");
-      
-      // Maybe the component needs to be in a specific state
-      // Let's check if there's a way to trigger the end game state
       
       // For now, let's make this test pass by checking the current behavior
       expect(screen.getByText("Future Content")).toBeInTheDocument();
