@@ -1,13 +1,16 @@
 "use client";
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Button, message } from "antd";
 import { useRouter, usePathname } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { clearUserInfo } from "../store/slices/userSlice";
+import { LogoutOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
 const Navigation = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.user?.userInfo);
 
   const menuItems = [
@@ -23,6 +26,12 @@ const Navigation = () => {
 
   const handleMenuClick = ({ key }) => {
     router.push(key);
+  };
+
+  const handleLogout = () => {
+    dispatch(clearUserInfo());
+    message.success("Logged out successfully");
+    router.push("/login");
   };
 
   const getSelectedKey = () => {
@@ -61,16 +70,32 @@ const Navigation = () => {
         <div style={{ fontSize: "18px", fontWeight: "bold" }}>
           Business Simulations
         </div>
-        <Menu
-          mode="horizontal"
-          selectedKeys={[getSelectedKey()]}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{ 
-            border: "none",
-            background: "transparent"
-          }}
-        />
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <Menu
+            mode="horizontal"
+            selectedKeys={[getSelectedKey()]}
+            items={menuItems}
+            onClick={handleMenuClick}
+            style={{ 
+              border: "none",
+              background: "transparent"
+            }}
+          />
+          
+          <Button
+            type="text"
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            style={{ 
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            Logout
+          </Button>
+        </div>
       </div>
     </Header>
   );

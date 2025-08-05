@@ -7,16 +7,26 @@ import { fetchSimulations } from "../../store/slices/simulationSlice";
 import axios from "axios";
 import SimulationList from "../../components/SimulationList";
 import KeyRedeem from "../../components/KeyRedeem";
+import { useAuthGuard } from "../../hooks/useAuth";
 
 const { TabPane } = Tabs;
 
 const Dashboard = () => {
+  const { isAuthenticated } = useAuthGuard();
   const dispatch = useDispatch();
   const simulations = useSelector((state) => state.simulations.data);
-  const userData = useSelector(state => state.user)
+  const userData = useSelector(state => state.user);
+  
   useEffect(() => {
-    dispatch(fetchSimulations());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchSimulations());
+    }
+  }, [dispatch, isAuthenticated]);
+
+  // Don't render dashboard content until authentication is verified
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div style={{ marginTop: "64px", padding: "24px" }}>

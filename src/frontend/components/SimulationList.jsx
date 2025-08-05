@@ -23,9 +23,10 @@ const SimulationList = ({ simulations }) => {
                   height={300}
                 />
               }
-              title={simulation.simulation?.title || 'Untitled Simulation'}  // Handle missing title
+              title={simulation.simulation?.name || 'Untitled Simulation'}  // Handle missing title
             >
-              {(simulation.simulation?.description?.substring(0, 50) || 'No description available')}...  // Handle missing description
+                            {/* Handle missing description */}
+              {(simulation.simulation?.description?.substring(0, 50) || 'No description available')}...  
             </Card>
           </Link>
         </List.Item>

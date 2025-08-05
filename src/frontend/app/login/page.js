@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Form, Input, Button, message, Divider } from "antd";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../store/slices/userSlice";
+import { useGuestGuard } from "../../hooks/useAuth";
 import axios from "axios";
 
 const LoginPage = () => {
+  const { isAuthenticated } = useGuestGuard();
   const [loginForm, keyForm] = Form.useForm();
   const [keyCode, setKeyCode] = useState("");
   const router = useRouter();
@@ -56,6 +58,11 @@ const LoginPage = () => {
   const handleKeyCodeChange = (e) => {
     setKeyCode(e.target.value);
   };
+
+  // Don't render login form if user is authenticated (they'll be redirected)
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div style={{ maxWidth: "300px", margin: "auto", marginTop: "100px" }}>

@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Form, Input, Button, message } from "antd";
 import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../store/slices/userSlice";
+import { useGuestGuard } from "../../hooks/useAuth";
 import axios from "axios";
 
 const RegisterPage = () => {
+  const { isAuthenticated } = useGuestGuard();
   const [form] = Form.useForm();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -56,6 +58,11 @@ const RegisterPage = () => {
         message.error("Validation failed: " + errorInfo);
       });
   };
+
+  // Don't render register form if user is authenticated (they'll be redirected)
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div style={{ maxWidth: "300px", margin: "auto", marginTop: "100px" }}>

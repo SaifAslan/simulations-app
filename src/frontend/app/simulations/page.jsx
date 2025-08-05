@@ -6,18 +6,22 @@ import { Card, Row, Col, Typography, Spin, Button, Empty } from "antd";
 import { PlayCircleOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { fetchSimulations } from "../../store/slices/simulationSlice";
+import { useAuthGuard } from "../../hooks/useAuth";
 import Image from "next/image";
 
 const { Title, Text } = Typography;
 
 const SimulationsPage = () => {
+  const { isAuthenticated } = useAuthGuard();
   const dispatch = useDispatch();
   const router = useRouter();
   const { data: simulations, loading, error } = useSelector((state) => state.simulations);
 
   useEffect(() => {
-    dispatch(fetchSimulations());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchSimulations());
+    }
+  }, [dispatch, isAuthenticated]);
 
   const handleSimulationClick = (simulation) => {
     // Handle missing route data gracefully
@@ -53,6 +57,11 @@ const SimulationsPage = () => {
     const route = simulation.simulation?.route || simulation.route;
     return Boolean(route);
   };
+
+  // Don't render content until authentication is verified
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (loading) {
     return (

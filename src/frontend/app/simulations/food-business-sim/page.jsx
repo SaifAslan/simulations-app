@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Typography, Spin, Alert } from "antd";
 import Game from "../../../components/Game";
+import { useAuthGuard } from "../../../hooks/useAuth";
 
 const { Title } = Typography;
 
 const FoodBusinessSimPage = () => {
+  const { isAuthenticated } = useAuthGuard();
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const { data: simulations } = useSelector((state) => state.simulations);
 
   useEffect(() => {
+    console.log(simulations);
+    
     // Check if user has access to this simulation
     const checkAccess = () => {
       if (!simulations || simulations.length === 0) {
@@ -21,16 +25,23 @@ const FoodBusinessSimPage = () => {
       }
 
       const hasSimulation = simulations.some(simulation => {
-        const route = simulation.simulation?.route || simulation.route;
-        return route === 'food-business-sim';
+        const route = simulation.simulation?.route;
+        return route === '/food-business-sim';
       });
 
       setHasAccess(hasSimulation);
       setLoading(false);
     };
 
-    checkAccess();
-  }, [simulations]);
+    if (isAuthenticated) {
+      checkAccess();
+    }
+  }, [simulations, isAuthenticated]);
+
+  // Don't render content until authentication is verified
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (loading) {
     return (
