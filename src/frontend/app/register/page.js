@@ -1,3 +1,4 @@
+// /src/frontend/app/register/page.js
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -6,42 +7,43 @@ import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../store/slices/userSlice";
 import { useGuestGuard } from "../../hooks/useAuth";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/consts";
 
 const RegisterPage = () => {
-  const { isAuthenticated } = useGuestGuard();
   const [form] = Form.useForm();
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const [keyCode, setKeyCode] = useState("");
   const keyCodeParam = searchParams.get("keyCode");
+  const { isAuthenticated, isLoading } = useGuestGuard();
 
   const validatePassword = (_, value) => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  if (value && !passwordRegex.test(value)) {
-    return Promise.reject(new Error('Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character'));
-  }
-  return Promise.resolve();
-};
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (value && !passwordRegex.test(value)) {
+      return Promise.reject(new Error('Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character'));
+    }
+    return Promise.resolve();
+  };
 
   useEffect(() => {
-    
     if (keyCodeParam) {
       setKeyCode(keyCodeParam);
+      form.setFieldsValue({ keyCode: keyCodeParam });
     }
-  }, [keyCodeParam]);
+  }, [keyCodeParam, form]);
 
-  // Function to handle form submission
   const onFinish = () => {
     form
       .validateFields()
       .then((values) => {
         axios
-          .post(`http://localhost:3030/users/register`, { ...values, keyCode })
+          .post(`${API_BASE_URL}/users/register`, { ...values, keyCode })
           .then((response) => {
             const data = response.data;
             if (data.success) {
               dispatch(setUserInfo(data.user));
+              message.success("Registration successful");
               router.push("/dashboard");
             } else {
               message.error(data.error);
@@ -59,8 +61,7 @@ const RegisterPage = () => {
       });
   };
 
-  // Don't render register form if user is authenticated (they'll be redirected)
-  if (isAuthenticated) {
+  if (isAuthenticated || isLoading) {
     return null;
   }
 

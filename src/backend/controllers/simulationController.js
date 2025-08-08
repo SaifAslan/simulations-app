@@ -159,7 +159,6 @@ exports.restoreSimulation = async (req, res, next) => {
     if (!simulation) {
       return res.status(404).json({ error: 'Simulation not found in recycle bin' });
     }
-    console.log(simulation);
     res.json({ message: 'Simulation restored successfully', simulation });
   } catch (error) {
     next(error);

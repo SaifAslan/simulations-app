@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSimulations } from "../store/slices/simulationSlice";
+import { API_BASE_URL } from "../utils/consts";
 
 const KeyRedeem = () => {
   const userData = useSelector(state => state.user)
@@ -14,7 +15,7 @@ const KeyRedeem = () => {
     if (keyCode) {
       try {
         const response = await axios.put(
-          `http://localhost:3030/keys/${keyCode}/activate`,
+          `${API_BASE_URL}/keys/${keyCode}/activate`,
           { simulationId: "6771e152415d875eb2356db6" },
           {
             headers: {

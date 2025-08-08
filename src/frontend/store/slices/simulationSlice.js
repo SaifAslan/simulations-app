@@ -1,19 +1,17 @@
 // redux/simulationSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/consts';
 
 export const fetchSimulations = createAsyncThunk(
   'simulations/fetchSimulations',
-  async (_, { getState }) => {
-    const state = getState();
-    const token = state.user?.userInfo?.token; 
-
-    const response = await axios.get('http://localhost:3030/user-simulations', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+  async (_, { getState, rejectWithValue }) => {
+    const token = getState().user?.userInfo?.token;
+    if (!token) return rejectWithValue('Not authenticated');
+    const res = await axios.get(`${API_BASE_URL}/user-simulations`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data;
+    return res.data;
   }
 );
 

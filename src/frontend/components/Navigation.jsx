@@ -1,9 +1,10 @@
+// /src/frontend/components/Navigation.jsx
 "use client";
 import { Layout, Menu, Button, message } from "antd";
+import { LogoutOutlined } from "@ant-design/icons";
 import { useRouter, usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUserInfo } from "../store/slices/userSlice";
-import { LogoutOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
@@ -70,8 +71,7 @@ const Navigation = () => {
         <div style={{ fontSize: "18px", fontWeight: "bold" }}>
           Business Simulations
         </div>
-        
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <Menu
             mode="horizontal"
             selectedKeys={[getSelectedKey()]}
@@ -82,16 +82,11 @@ const Navigation = () => {
               background: "transparent"
             }}
           />
-          
           <Button
             type="text"
             icon={<LogoutOutlined />}
             onClick={handleLogout}
-            style={{ 
-              display: "flex",
-              alignItems: "center",
-              gap: "4px"
-            }}
+            style={{ color: "#ff4d4f" }}
           >
             Logout
           </Button>
@@ -101,4 +96,4 @@ const Navigation = () => {
   );
 };
 
-export default Navigation; 
+export default Navigation;

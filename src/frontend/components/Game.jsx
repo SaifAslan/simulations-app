@@ -11,6 +11,7 @@ import GameStats from "./GameStats";
 import MethodSelector from "./MethodSelector";
 import ProductSelector from "./ProductSelector";
 import LocationSelector from "./LocationSelector";
+import { API_BASE_URL } from "../utils/consts";
 
 const { Content } = Layout;
 
@@ -57,7 +58,7 @@ const Game = ({ initialDays = 35, simulationId = "67720433a90800571dfe2243" }) =
   };
 
   const postScore = async (score) => {
-    const response = await fetch('http://localhost:3030/leaderboard', {
+    const response = await fetch(`${API_BASE_URL}/leaderboard`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ const Game = ({ initialDays = 35, simulationId = "67720433a90800571dfe2243" }) =
   };
 
   const fetchLeaderboard = async () => {
-    const response = await fetch(`http://localhost:3030/leaderboard?simulationId=${simulationId}`, {
+    const response = await fetch(`${API_BASE_URL}/leaderboard?simulationId=${simulationId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -199,8 +200,9 @@ const Game = ({ initialDays = 35, simulationId = "67720433a90800571dfe2243" }) =
 
               <ProductSelector
                 selectedProduct={selectedProduct}
+                onMethodSelect={handleMethodSelect}
                 onProductSelect={handleProductSelect}
-                disabled={!selectedMethod}
+                daysLeft={daysLeft}
               />
 
               <Divider>Select Your Location</Divider>
@@ -208,18 +210,12 @@ const Game = ({ initialDays = 35, simulationId = "67720433a90800571dfe2243" }) =
               <LocationSelector
                 selectedLocation={selectedLocation}
                 onLocationSelect={handleLocationSelect}
-                disabled={!selectedProduct}
               />
 
-              <Button
-                style={{ marginTop: "1rem" }}
-                type="primary"
-                onClick={handleSubmit}
-                disabled={
-                  !selectedMethod || !selectedProduct || !selectedLocation || gameEnded
-                }
-              >
-                Run!
+              <Divider />
+
+              <Button type="primary" onClick={handleSubmit}>
+                Submit Day
               </Button>
             </Card>
           </Col>

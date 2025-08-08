@@ -1,5 +1,5 @@
+// /src/frontend/app/login/page.js
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Form, Input, Button, message, Divider } from "antd";
@@ -7,23 +7,24 @@ import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../store/slices/userSlice";
 import { useGuestGuard } from "../../hooks/useAuth";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/consts";
 
 const LoginPage = () => {
-  const { isAuthenticated } = useGuestGuard();
   const [loginForm, keyForm] = Form.useForm();
   const [keyCode, setKeyCode] = useState("");
   const router = useRouter();
   const dispatch = useDispatch();
+  const { isAuthenticated, isLoading } = useGuestGuard();
 
   const onFinishLogin = () => {
     loginForm.validateFields().then((values) => {
       axios
-        .post(`http://localhost:3030/users/login`, values)
+        .post(`${API_BASE_URL}/users/login`, values)
         .then((response) => {
           const data = response.data;
-          console.log(data);
           
           dispatch(setUserInfo(data.user));
+          message.success("Login successful");
           router.push("/dashboard");
         })
         .catch((error) => {
@@ -38,7 +39,7 @@ const LoginPage = () => {
 
   const onFinishRegisterWithCode = () => {
     axios
-      .post(`http://localhost:3030/keys/checkKey/${keyCode}`, {})
+      .post(`${API_BASE_URL}/keys/checkKey/${keyCode}`, {})
       .then((response) => {
         const keyCheckData = response.data;
         if (keyCheckData.valid) {
@@ -59,8 +60,7 @@ const LoginPage = () => {
     setKeyCode(e.target.value);
   };
 
-  // Don't render login form if user is authenticated (they'll be redirected)
-  if (isAuthenticated) {
+  if (isAuthenticated || isLoading) {
     return null;
   }
 

@@ -1,31 +1,33 @@
-// src/frontend/app/simulations/food-business-sim/page.js
+// /src/frontend/app/simulations/food-business-sim/page.jsx
 "use client";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Typography, Spin, Alert } from "antd";
-import Game from "../../../components/Game";
 import { useAuthGuard } from "../../../hooks/useAuth";
+import Game from "../../../components/Game";
 
 const { Title } = Typography;
 
 const FoodBusinessSimPage = () => {
-  const { isAuthenticated } = useAuthGuard();
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useAuthGuard();
   const { data: simulations } = useSelector((state) => state.simulations);
 
   useEffect(() => {
-    console.log(simulations);
-    
     // Check if user has access to this simulation
     const checkAccess = () => {
+      if (!isAuthenticated || authLoading) {
+        return;
+      }
+
       if (!simulations || simulations.length === 0) {
         setLoading(false);
         return;
       }
 
       const hasSimulation = simulations.some(simulation => {
-        const route = simulation.simulation?.route;
+        const route = simulation.simulation?.route || simulation.route;
         return route === '/food-business-sim';
       });
 
@@ -33,13 +35,12 @@ const FoodBusinessSimPage = () => {
       setLoading(false);
     };
 
-    if (isAuthenticated) {
+    if (isAuthenticated && !authLoading) {
       checkAccess();
     }
-  }, [simulations, isAuthenticated]);
+  }, [simulations, isAuthenticated, authLoading]);
 
-  // Don't render content until authentication is verified
-  if (!isAuthenticated) {
+  if (!isAuthenticated || authLoading) {
     return null;
   }
 

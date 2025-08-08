@@ -5,6 +5,7 @@
   "scripts": {
     "test": "vitest",
     "dev": "nodemon app.js",
+    "start": "node app.js",
     "add-food-sim": "node scripts/addFoodBusinessSim.js"
   },
   "author": "",

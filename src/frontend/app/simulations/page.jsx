@@ -1,4 +1,4 @@
-// src/frontend/app/simulations/page.js
+// /src/frontend/app/simulations/page.jsx
 "use client";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,19 +12,18 @@ import Image from "next/image";
 const { Title, Text } = Typography;
 
 const SimulationsPage = () => {
-  const { isAuthenticated } = useAuthGuard();
   const dispatch = useDispatch();
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuthGuard();
   const { data: simulations, loading, error } = useSelector((state) => state.simulations);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !authLoading) {
       dispatch(fetchSimulations());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, isAuthenticated, authLoading]);
 
   const handleSimulationClick = (simulation) => {
-    // Handle missing route data gracefully
     const route = simulation.simulation?.route || simulation.route;
     if (route) {
       router.push(`/simulations/${route}`);
@@ -58,8 +57,7 @@ const SimulationsPage = () => {
     return Boolean(route);
   };
 
-  // Don't render content until authentication is verified
-  if (!isAuthenticated) {
+  if (!isAuthenticated || authLoading) {
     return null;
   }
 

@@ -1,35 +1,50 @@
+// /src/frontend/hooks/useAuth.js
 "use client";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-
-export const useAuth = (redirectTo = '/login', requireAuth = true) => {
+export const useAuth = (redirectTo = null, requireAuth = true) => {
+  const [isLoading, setIsLoading] = useState(true);
   const userInfo = useSelector((state) => state.user?.userInfo);
   const router = useRouter();
   const isAuthenticated = !!userInfo;
 
   useEffect(() => {
-    if (requireAuth && !isAuthenticated) {
-      // User should be authenticated but isn't - redirect to login
-      router.push('/login');
-    } else if (!requireAuth && isAuthenticated) {
-      // User shouldn't be on this page if authenticated - redirect away
-      router.push(redirectTo);
-    }
-  }, [isAuthenticated, requireAuth, redirectTo, router]);
+    setIsLoading(false);
 
-  return {
-    isAuthenticated,
-    userInfo,
-    isLoading: false // Can be extended later for loading states
-  };
+    if (redirectTo) {
+      if (requireAuth && !isAuthenticated) {
+        router.push(redirectTo);
+      } else if (!requireAuth && isAuthenticated) {
+        router.push(redirectTo);
+      }
+    }
+  }, [isAuthenticated, redirectTo, requireAuth, router]);
+
+  return { isAuthenticated, userInfo, isLoading };
 };
 
 export const useAuthGuard = () => {
-  return useAuth('/login', true);
+  const { isAuthenticated, userInfo, isLoading } = useAuth("/login", true);
+  
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      // Additional logic if needed when redirecting
+    }
+  }, [isLoading, isAuthenticated]);
+
+  return { isAuthenticated, userInfo, isLoading };
 };
 
-export const useGuestGuard = (redirectTo = '/dashboard') => {
-  return useAuth(redirectTo, false);
-}; 
+export const useGuestGuard = (redirectTo = "/dashboard") => {
+  const { isAuthenticated, userInfo, isLoading } = useAuth(redirectTo, false);
+  
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      // Additional logic if needed when redirecting
+    }
+  }, [isLoading, isAuthenticated]);
+
+  return { isAuthenticated, userInfo, isLoading };
+};

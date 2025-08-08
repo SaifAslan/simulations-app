@@ -1,3 +1,39 @@
+## Quickstart
+
+- Install Node.js 18+ and npm.
+- Copy env files:
+  - Backend: `cp src/backend/.env.example src/backend/.env`
+  - Frontend: `cp src/frontend/.env.example src/frontend/.env.local`
+- Update values as needed.
+
+### Environment variables
+
+- Backend `src/backend/.env`:
+  - `PORT=3030`
+  - `MONGODB_URI=your-mongodb-connection-string`
+  - `JWT_SECRET=change-me`
+  - `CORS_ORIGIN=http://localhost:3000`
+- Frontend `src/frontend/.env.local`:
+  - `NEXT_PUBLIC_API_BASE_URL=http://localhost:3030`
+
+### Run locally
+
+```sh
+npm install
+npm --prefix src/frontend install
+npm --prefix src/backend install
+npm run dev
+```
+
+Backend runs on `http://localhost:3030`; Frontend on `http://localhost:3000`.
+
+### Tests
+
+```sh
+./run_tests.sh
+```
+
+---
 # Docker Dev Env for JS
 
 # Running tests

@@ -25,8 +25,7 @@ const SimulationList = ({ simulations }) => {
               }
               title={simulation.simulation?.name || 'Untitled Simulation'}  // Handle missing title
             >
-                            {/* Handle missing description */}
-              {(simulation.simulation?.description?.substring(0, 50) || 'No description available')}...  
+              {(simulation.simulation?.description?.substring(0, 50) || 'No description available')}...
             </Card>
           </Link>
         </List.Item>

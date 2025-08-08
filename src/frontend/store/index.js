@@ -2,6 +2,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // localStorage
+import {thunk} from 'redux-thunk';
 
 import userReducer from './slices/userSlice';
 import simulationReducer from './slices/simulationSlice';
@@ -14,7 +15,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['user', 'simulations'],
+  whitelist: ['user'], // persist only user slice
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

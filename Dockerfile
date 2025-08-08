@@ -57,6 +57,9 @@ COPY . .
 # Make run_tests.sh executable if needed
 RUN chmod +x ./run_tests.sh || true
 
+# Default envs (override at runtime)
+ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:3030
+
 # Expose frontend and backend ports
 EXPOSE 3000 3030
 
